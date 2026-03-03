@@ -72,5 +72,46 @@ model Order {
   status          String      @default("pending")
   fulfillmentType String      @default("pickup")
   createdAt       DateTime    @default(now())
-  up
-... [truncated]
+  updatedAt       DateTime    @updatedAt
+  restaurant      Restaurant  @relation(fields: [restaurantId], references: [id])
+  user            User?       @relation(fields: [userId], references: [id])
+  items           OrderItem[]
+}
+
+model OrderItem {
+  id         String   @id @default(cuid())
+  orderId    String
+  menuItemId String
+  name       String
+  price      Float
+  quantity   Int      @default(1)
+  createdAt  DateTime @default(now())
+  order      Order    @relation(fields: [orderId], references: [id])
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+}
+
+model Reservation {
+  id           String   @id @default(cuid())
+  restaurantId String
+  userId       String?
+  tableId      String?
+  partySize    Int
+  status       String   @default("pending")
+  reservedAt   DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  user         User?      @relation(fields: [userId], references: [id])
+  table        Table?     @relation(fields: [tableId], references: [id])
+}
+
+model Table {
+  id           String        @id @default(cuid())
+  restaurantId String
+  name         String
+  capacity     Int
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id])
+  reservations Reservation[]
+}

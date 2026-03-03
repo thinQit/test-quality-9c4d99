@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("customer")
+  phone        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  orders       Order[]
+  reservations Reservation[]
+}
+
+model Restaurant {
+  id          String       @id @default(cuid())
+  name        String
+  address     String
+  phone       String
+  hours       Json?
+  settings    Json?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  categories  Category[]
+  menuItems   MenuItem[]
+  orders      Order[]
+  reservations Reservation[]
+  tables      Table[]
+}
+
+model Category {
+  id           String     @id @default(cuid())
+  restaurantId String
+  name         String
+  position     Int        @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  menuItems    MenuItem[]
+}
+
+model MenuItem {
+  id           String     @id @default(cuid())
+  restaurantId String
+  categoryId   String?
+  name         String
+  description  String?
+  price        Float
+  available    Boolean    @default(true)
+  featured     Boolean    @default(false)
+  modifiers    Json?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  category     Category?  @relation(fields: [categoryId], references: [id])
+  orderItems   OrderItem[]
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  restaurantId    String
+  userId          String?
+  total           Float
+  status          String      @default("pending")
+  fulfillmentType String      @default("pickup")
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  restaurant      Restaurant  @relation(fields: [restaurantId], references: [id])
+  user            User?       @relation(fields: [userId], references: [id])
+  items           OrderItem[]
+  payment         Payment?
+}
+
+model OrderItem {
+  id         String   @id @default(cuid())
+  orderId    String
+  menuItemId String
+  name       String
+  quantity   Int
+  price      Float
+  modifiers  Json?
+  order      Order    @relation(fields: [orderId], references: [id])
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+}
+
+model Reservation {
+  id           String      @id @default(cuid())
+  restaurantId String
+  userId       String?
+  name         String
+  email        String
+  phone        String
+  partySize    Int
+  startTime    DateTime
+  endTime      DateTime?
+  status       String      @default("pending")
+  tableId      String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id])
+  user         User?       @relation(fields: [userId], references: [id])
+  table        Table?      @relation(fields: [tableId], references: [id])
+}
+
+model Table {
+  id           String       @id @default(cuid())
+  restaurantId String
+  name         String
+  capacity     Int
+  location     String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id])
+  reservations Reservation[]
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  orderId   String   @unique
+  amount    Float
+  currency  String
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  order     Order    @relation(fields: [orderId], references: [id])
+}
